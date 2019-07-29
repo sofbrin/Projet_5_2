@@ -6,6 +6,7 @@ import os
 import django
 import requests as requests
 from django.core.exceptions import ObjectDoesNotExist
+from dbsearch import find_or_substitute
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "purbeurre2.settings")
 django.setup()
@@ -22,12 +23,16 @@ def select_categories():
 
     categories = sorted(categories, key=lambda x: x['products'], reverse=True)
     for category in categories:
-        selected_categories.append(category)
-        save_categories_in_db(category)
-        print('\nLa catégorie "' + category['name'] + '" vient d\'être ajoutée dans la base de données')
-        select_products(category)
-        if len(selected_categories) == 5:
-            break
+        try:
+            CategoryDb.objects.get(url=category['url'])
+            find_or_substitute()
+        except ObjectDoesNotExist:
+            selected_categories.append(category)
+            save_categories_in_db(category)
+            print('\nLa catégorie "' + category['name'] + '" vient d\'être ajoutée dans la base de données')
+            select_products(category)
+            if len(selected_categories) == 5:
+                break
 
 
 def select_products(category):
@@ -40,34 +45,32 @@ def select_products(category):
         products = response['products']
 
         for product in products:
-            if 'product_name' in product and product['product_name'] != '' and product['product_name'] != 'inconnue' \
-                    and 'brands' in product and product['brands'] != '' and product['brands'] != 'inconnue' \
-                    and 'origins' in product and product['origins'] != '' and product['origins'] != 'inconnue' \
-                    and 'manufacturing_places' in product and product['manufacturing_places'] != '' \
-                    and product['manufacturing_places'] != 'inconnue' \
-                    and 'countries' in product and product['countries'] != '' and product['countries'] != 'inconnue' \
-                    and 'stores' in product and product['stores'] != '' and product['stores'] != 'inconnue' \
-                    and 'nutrition_grades' in product and product['nutrition_grades'] != '' \
-                    and product['nutrition_grades'] != 'inconnue':
-                selected_products.append(product)
-                save_products_in_db(product, category)
-                print('Le produit "' + product['product_name'] + '" vient d\'être ajouté dans cette catégorie.')
-            if len(selected_products) == 5:
-                break
+            try:
+                ProductDb.objects.get(url=product['url'])
+                pass
+            except ObjectDoesNotExist:
+                if 'product_name' in product and product['product_name'] != '' \
+                        and 'brands' in product and product['brands'] != '' \
+                        and 'origins' in product and product['origins'] != '' \
+                        and 'manufacturing_places' in product and product['manufacturing_places'] != '' \
+                        and 'countries' in product and product['countries'] != '' \
+                        and 'stores' in product and product['stores'] != '' \
+                        and 'nutrition_grades' in product and product['nutrition_grades'] != '':
+                    selected_products.append(product)
+                    save_products_in_db(product, category)
+                    print('Le produit "' + product['product_name'] + '" vient d\'être ajouté dans cette catégorie.')
+                if len(selected_products) == 5:
+                    break
         page += 1
 
 
 def save_categories_in_db(category):
-    category_db = CategoryDb(name=category['name'])
+    category_db = CategoryDb(url=category['url'], name=category['name'])
     category_db.save()
-    """try:
-        category_db = CategoryDb.objects.get(name=category['name'])
-    except ObjectDoesNotExist:
-        category_db = CategoryDb(name=category['name'])
-        category_db.save()"""
+
 
 def save_products_in_db(product, category):
-    category_db = CategoryDb.objects.get(name=category['name'])
+    category_db = CategoryDb.objects.get(url=category['url'])
 
     product_db = ProductDb(name=product['product_name'], category=category_db, brand=product['brands'],
                            origin=product['origins'], manufacturing_places=product['manufacturing_places'],
@@ -78,3 +81,4 @@ def save_products_in_db(product, category):
 
 if __name__ == '__main__':
     select_categories()
+    find_or_substitute()

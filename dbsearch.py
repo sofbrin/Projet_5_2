@@ -14,13 +14,12 @@ from constants import App_Title, App_Intro, App_Home_Menu, App_Categories_Menu, 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "purbeurre2.settings")
 django.setup()
 
-from AppPurbeurre2.models import HistoricDb
-from dbbuilder import *
-
-select_categories()
+from AppPurbeurre2.models import CategoryDb, ProductDb, HistoricDb
 
 
 def find_or_substitute():
+    print(App_Title)
+    print(App_Intro)
 
     while True:
         input_user = input(App_Home_Menu)
@@ -95,12 +94,12 @@ def select_a_product(category):
             try:
                 selection = int(input_user)
                 if len(page.object_list) >= selection >= 1:
-                    display_product(page.object_list[selection-1], category)
+                    display_product(page.object_list[selection-1])
             except ValueError:
                 continue
 
 
-def display_product(product, category):
+def display_product(product):
 
     while True:
         input_user = input(App_Selected_Product_Menu)
@@ -109,7 +108,12 @@ def display_product(product, category):
             display_product_characteristics(product)
 
         elif input_user == '2':
-            suggest_substitutes(product, category)
+            if product.nutriscore == 'a':
+                print('\nNous ne pouvons pas vous proposer un substitut de meilleure qualité pour ce produit '
+                      'car son indice nutriscore est "A". Veuillez choisir un autre produit à substituter.\n')
+                select_a_product(product)
+            else:
+                suggest_substitutes(product)
 
         elif input_user == '0':
             return
@@ -117,19 +121,18 @@ def display_product(product, category):
             continue
 
 
-def suggest_substitutes(product, category):
+def suggest_substitutes(product):
 
-    print('Voici la liste des substituts que nous vous proposons pour ce produit :')
     print(App_Suggested_Product_Menu)
 
-    substitutes = ProductDb.objects.filter(nutriscore__lt=product.nutriscore).order_by('id')
+    substitutes = ProductDb.objects.filter(category=product.category, nutriscore__lt=product.nutriscore).order_by('id')
     p = Paginator(substitutes, 5)
     page_number = 1
     page = p.page(page_number)
 
     while True:
-        for idx, product in enumerate(page.object_list):
-            print(idx+1, product.name)
+        for idx, substitute in enumerate(page.object_list):
+            print(idx+1, substitute.name)
 
         input_user = input(App_Products_Menu)
 
@@ -148,19 +151,19 @@ def suggest_substitutes(product, category):
             try:
                 selection = int(input_user)
                 if len(page.object_list) >= selection >= 1:
-                    display_substitute(page.object_list[selection-1], product, category)
+                    display_substitute(page.object_list[selection-1], product)
             except ValueError:
                 continue
 
 
-def display_substitute(substitute, product, category):
+def display_substitute(substitute, product):
 
     display_product_characteristics(substitute)
 
     while True:
         input_user = input(App_Save_Substitute_Menu)
         if input_user == '1':
-            save_substitutes_in_db(substitute, product, category)
+            save_substitutes_in_db(substitute, product)
         elif input_user == '2':
             return
         elif input_user == '0':
@@ -169,17 +172,9 @@ def display_substitute(substitute, product, category):
             continue
 
 
-def save_substitutes_in_db(substitute, product, category):
-    category_db = CategoryDb.objects.get(name=category['name'])
-    product_db = ProductDb.objects.get(name=product['product_name'])
+def save_substitutes_in_db(substitute, product):
 
-    substitute_db = ProductDb(name=substitute['product_name'], category=category_db, brand=substitute['brands'],
-                              origin=substitute['origins'], manufacturing_places=substitute['manufacturing_places'],
-                              countries=substitute['countries'], store=substitute['stores'],
-                              nutriscore=substitute['nutrition_grades'], url=substitute['url'])
-    substitute_db.save()
-
-    historic_db = HistoricDb(product_original=product_db, product_replaceable=substitute_db)
+    historic_db = HistoricDb(product_replaceable=substitute, product_original=product)
     historic_db.save()
 
 
@@ -283,10 +278,3 @@ def show_historic_substitution(category):
                     display_product_characteristics(ProductDb.objects.get(id=selection))
             except ValueError:
                 continue
-
-
-if __name__ == '__main__':
-    print(App_Title)
-    print(App_Intro)
-
-    find_or_substitute()
