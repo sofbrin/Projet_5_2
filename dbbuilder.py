@@ -31,7 +31,7 @@ def select_categories():
             save_categories_in_db(category)
             print('\nLa catégorie "' + category['name'] + '" vient d\'être ajoutée dans la base de données')
             select_products(category)
-            if len(selected_categories) == 5:
+            if len(selected_categories) == 20:
                 break
 
 
@@ -39,7 +39,7 @@ def select_products(category):
     selected_products = []
     page = 1
 
-    while len(selected_products) < 5:
+    while len(selected_products) < 20:
         r_products = requests.get(category['url'] + '/{}.json'.format(page))
         response = r_products.json()
         products = response['products']
@@ -59,7 +59,7 @@ def select_products(category):
                     selected_products.append(product)
                     save_products_in_db(product, category)
                     print('Le produit "' + product['product_name'] + '" vient d\'être ajouté dans cette catégorie.')
-                if len(selected_products) == 5:
+                if len(selected_products) == 20:
                     break
         page += 1
 

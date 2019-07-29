@@ -27,11 +27,3 @@ class ProductDb(models.Model):
 class HistoricDb(models.Model):
     product_original = models.ForeignKey(ProductDb, on_delete=models.CASCADE, related_name='product_original')
     product_replaceable = models.ForeignKey(ProductDb, on_delete=models.CASCADE, related_name='product_replaceable')
-
-
-
-"""ERRORS:
-AppPurbeurre2.ProductDb.category: (fields.E304) Reverse accessor for 'ProductDb.category' clashes with reverse accessor for 'ProductDb.url'.
-        HINT: Add or change a related_name argument to the definition for 'ProductDb.category' or 'ProductDb.url'.
-AppPurbeurre2.ProductDb.url: (fields.E304) Reverse accessor for 'ProductDb.url' clashes with reverse accessor for 'ProductDb.category'.
-        HINT: Add or change a related_name argument to the definition for 'ProductDb.url' or 'ProductDb.category'."""
