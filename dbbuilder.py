@@ -15,6 +15,8 @@ from AppPurbeurre2.models import CategoryDb, ProductDb
 
 
 def select_categories():
+    if CategoryDb.objects.all().count() != 0:
+        return
     r_categories = requests.get('https://fr.openfoodfacts.org/categories.json')
     response = r_categories.json()
     categories = response['tags']
@@ -25,7 +27,6 @@ def select_categories():
     for category in categories:
         try:
             CategoryDb.objects.get(url=category['url'])
-            find_or_substitute()
         except ObjectDoesNotExist:
             selected_categories.append(category)
             save_categories_in_db(category)
@@ -47,7 +48,6 @@ def select_products(category):
         for product in products:
             try:
                 ProductDb.objects.get(url=product['url'])
-                pass
             except ObjectDoesNotExist:
                 if 'product_name' in product and product['product_name'] != '' \
                         and 'brands' in product and product['brands'] != '' \
