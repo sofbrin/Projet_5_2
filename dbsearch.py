@@ -177,6 +177,9 @@ def save_substitutes_in_db(substitute, product):
     historic_db = HistoricDb(product_replaceable=substitute, product_original=product)
     historic_db.save()
 
+    print('Le produit ' + product.name + ' et le substitut ' + substitute.name +
+          ' ont bien été enregistrés dans votre historique de substitution.')
+
 
 def display_product_characteristics(product):
 
