@@ -55,7 +55,8 @@ def select_products(category):
                         and 'manufacturing_places' in product and product['manufacturing_places'] != '' \
                         and 'countries' in product and product['countries'] != '' \
                         and 'stores' in product and product['stores'] != '' \
-                        and 'nutrition_grades' in product and product['nutrition_grades'] != '':
+                        and 'nutrition_grades' in product and product['nutrition_grades'] != ''\
+                        and 'url' in product and product['url'] != '':
                     selected_products.append(product)
                     save_products_in_db(product, category)
                     print('Le produit "' + product['product_name'] + '" vient d\'être ajouté dans cette catégorie.')
@@ -72,10 +73,13 @@ def save_categories_in_db(category):
 def save_products_in_db(product, category):
     category_db = CategoryDb.objects.get(url=category['url'])
 
-    product_db = ProductDb(name=product['product_name'], category=category_db, brand=product['brands'],
-                           origin=product['origins'], manufacturing_places=product['manufacturing_places'],
-                           countries=product['countries'], store=product['stores'],
-                           nutriscore=product['nutrition_grades'], url=product['url'])
+    product_db = ProductDb(name=product['product_name'].encode(encoding='UTF-8'), category=category_db,
+                           brand=product['brands'].encode(encoding='UTF-8'),
+                           origin=product['origins'].encode(encoding='UTF-8'),
+                           manufacturing_places=product['manufacturing_places'].encode(encoding='UTF-8'),
+                           countries=product['countries'], store=product['stores'].encode(encoding='UTF-8'),
+                           nutriscore=product['nutrition_grades'],
+                           url=product['url'].encode(encoding='UTF-8'))
     product_db.save()
 
 
